@@ -19,24 +19,24 @@ public class ParentController {
     private final UserRepository usersRepository;
     private final ReportRepository reportRepository;
 
-    @GetMapping("/{parentId}/children")
-    public ResponseEntity<?> getChildren(@PathVariable UUID parentId) {
-        Users parent = usersRepository.findById(parentId)
-                .orElseThrow(() -> new RuntimeException("Parent not found"));
-        return ResponseEntity.ok(parent.getChildren());
-    }
-
-    @GetMapping("/{parentId}/child/{studentId}/reports")
-    public ResponseEntity<?> getChildReports(@PathVariable UUID parentId, @PathVariable UUID studentId) {
-        Users parent = usersRepository.findById(parentId)
-                .orElseThrow(() -> new RuntimeException("Parent not found"));
-
-        boolean canAccess = parent.getChildren()
-                .stream().anyMatch(s -> s.getId().equals(studentId));
-
-        if (!canAccess) return ResponseEntity.status(403).body("Access denied");
-
-        List<Report> reports = reportRepository.findByStudentId(studentId);
-        return ResponseEntity.ok(reports);
-    }
+//    @GetMapping("/{parentId}/children")
+//    public ResponseEntity<?> getChildren(@PathVariable UUID parentId) {
+//        Users parent = usersRepository.findById(parentId)
+//                .orElseThrow(() -> new RuntimeException("Parent not found"));
+//        return ResponseEntity.ok(parent.getChildren());
+//    }
+//
+//    @GetMapping("/{parentId}/child/{studentId}/reports")
+//    public ResponseEntity<?> getChildReports(@PathVariable UUID parentId, @PathVariable UUID studentId) {
+//        Users parent = usersRepository.findById(parentId)
+//                .orElseThrow(() -> new RuntimeException("Parent not found"));
+//
+//        boolean canAccess = parent.getChildren()
+//                .stream().anyMatch(s -> s.getId().equals(studentId));
+//
+//        if (!canAccess) return ResponseEntity.status(403).body("Access denied");
+//
+//        List<Report> reports = reportRepository.findByStudentId(studentId);
+//        return ResponseEntity.ok(reports);
+//    }
 }
