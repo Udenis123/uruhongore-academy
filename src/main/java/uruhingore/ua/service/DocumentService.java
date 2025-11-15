@@ -65,6 +65,26 @@ public class DocumentService {
     }
 
     /**
+     * Generate bulletin PDF from database using academic data ID
+     */
+    public byte[] generateBulletinFromAcademicData(java.util.UUID studentId, java.util.UUID academicDataId) 
+            throws DocumentException, IOException {
+        
+        // Fetch reports from database (only published) for the given student and academic data
+        List<uruhingore.ua.model.Report> reports = reportRepository.findPublishedByStudentIdAndAcademicDataId(
+                studentId, academicDataId);
+        
+        if (reports.isEmpty()) {
+            throw new IllegalArgumentException("No reports found for the given student and academic data");
+        }
+        
+        // Build bulletin request from reports
+        BulletinRequest request = buildBulletinRequestFromReports(reports);
+        
+        return generateBulletinPdf(request);
+    }
+
+    /**
      * Generate grid-based bulletin with color-filled cells for all trimesters (matching the image design)
      */
     public byte[] generateGridBulletin(java.util.UUID studentId, Integer academicYear, 

@@ -20,7 +20,7 @@ public interface ReportRepository extends JpaRepository<Report, UUID> {
     List<Report> findPublishedByStudentId(@Param("studentId") UUID studentId);
 
     // Find reports by student and academic data (only published)
-    @Query("SELECT r FROM Report r WHERE r.student.id = :studentId AND r.academicData.id = :academicDataId AND r.academicData.published = true")
+    @Query("SELECT r FROM Report r WHERE r.student.id = :studentId AND r.academicData.id = :academicDataId AND r.academicData.published = true ORDER BY r.module.indexOrder")
     List<Report> findPublishedByStudentIdAndAcademicDataId(@Param("studentId") UUID studentId, @Param("academicDataId") UUID academicDataId);
 
     // Find reports by student, trimester, and year (only published)

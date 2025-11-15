@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GroupedReportResponse {
     
+    private Integer academicYear;
     private StudentInfo student;
     private AcademicDataInfo academicData;
     private ClassLevel classLevel;
@@ -121,6 +122,7 @@ public class GroupedReportResponse {
                     .collect(Collectors.toList());
             
             GroupedReportResponse groupedResponse = GroupedReportResponse.builder()
+                    .academicYear(firstReport.getAcademicData() != null ? firstReport.getAcademicData().getAcademicYear() : null)
                     .student(firstReport.getStudent() != null ? StudentInfo.builder()
                             .id(firstReport.getStudent().getId())
                             .studentCode(firstReport.getStudent().getStudentCode())
@@ -180,6 +182,7 @@ public class GroupedReportResponse {
                 .collect(Collectors.toList());
         
         return GroupedReportResponse.builder()
+                .academicYear(firstReport.getAcademicData() != null ? firstReport.getAcademicData().getAcademicYear() : null)
                 .student(firstReport.getStudent() != null ? StudentInfo.builder()
                         .id(firstReport.getStudent().getId())
                         .studentCode(firstReport.getStudent().getStudentCode())
