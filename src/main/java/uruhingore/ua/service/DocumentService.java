@@ -338,7 +338,7 @@ public class DocumentService {
         
         // Get teacher comment from the first report (or combine them if needed)
         String comment = firstReport.getTeacherComment();
-        String classe = firstReport.getClasse() != null ? firstReport.getClasse() : "N/A";
+        String classe = firstReport.getClassLevel() != null ? firstReport.getClassLevel().getDisplayName() : "N/A";
         String studentFullName = student.getFirstName() + " " + student.getLastName();
         String trimesterName = "TRIMESTRE " + getRomanNumeral(trimester.getValue());
         

@@ -22,6 +22,8 @@ public interface AcademicDataRepository extends JpaRepository<AcademicData, UUID
 
     List<AcademicData> findByPublishedTrue();
 
+    List<AcademicData> findByPublishedFalse();
+
     List<AcademicData> findByAcademicYear(Integer academicYear);
 
     List<AcademicData> findByTrimesterAndAcademicYear(Trimester trimester, Integer academicYear);
@@ -36,5 +38,8 @@ public interface AcademicDataRepository extends JpaRepository<AcademicData, UUID
 
     @Query("SELECT ad FROM AcademicData ad ORDER BY ad.createdAt ASC")
     List<AcademicData> findAllOrderByCreatedAtAsc();
+
+    @Query("SELECT ad FROM AcademicData ad WHERE ad.published = false ORDER BY ad.createdAt DESC")
+    List<AcademicData> findAllUnpublishedOrderByCreatedAtDesc();
 }
 

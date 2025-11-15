@@ -66,6 +66,15 @@ public class AcademicDataService {
     }
 
     /**
+     * Get all unpublished AcademicData
+     * Ordered by most recently created first
+     */
+    @Transactional(readOnly = true)
+    public List<AcademicData> getAllUnpublished() {
+        return academicDataRepository.findAllUnpublishedOrderByCreatedAtDesc();
+    }
+
+    /**
      * Get all AcademicData (including unpublished) - for admin/head
      * Ordered by most recently created first
      */

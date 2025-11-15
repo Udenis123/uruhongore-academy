@@ -36,6 +36,17 @@ public class AcademicDataController {
     }
 
     /**
+     * Get all unpublished academic data - for admin/head
+     * Ordered by most recently created first
+     */
+    @GetMapping("/unpublished")
+    public ResponseEntity<List<AcademicData>> getUnpublishedAcademicData() {
+        log.info("Received request to get all unpublished academic data");
+        List<AcademicData> academicData = academicDataService.getAllUnpublished();
+        return ResponseEntity.ok(academicData);
+    }
+
+    /**
      * Get all academic data (including unpublished) - for admin/head
      * Ordered by most recently created first
      */

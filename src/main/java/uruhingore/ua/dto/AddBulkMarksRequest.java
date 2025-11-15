@@ -1,7 +1,6 @@
 package uruhingore.ua.dto;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,18 +8,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import uruhingore.ua.model.ClassLevel;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddMarkRequest {
+public class AddBulkMarksRequest {
+    
     @NotNull(message = "Student ID is required")
     private UUID studentId;
-    
-    @NotNull(message = "Module ID is required")
-    private UUID moduleId;
     
     @NotNull(message = "Academic Data ID is required")
     private UUID academicDataId;
@@ -28,11 +26,23 @@ public class AddMarkRequest {
     @NotNull(message = "Class level is required")
     private ClassLevel classLevel;
     
-    @NotNull(message = "Score is required")
-    @Min(value = 0, message = "Score must be at least 0")
-    @Max(value = 100, message = "Score must be at most 100")
-    private Integer score; // 0-100
-    
-    private String teacherComment; // Optional
+    private String teacherComment; // Optional - applies to all marks
     private UUID teacherId; // Optional
+    
+    @NotNull(message = "Module marks are required")
+    @Valid
+    private List<ModuleMark> moduleMarks;
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ModuleMark {
+        @NotNull(message = "Module ID is required")
+        private UUID moduleId;
+        
+        @NotNull(message = "Score is required")
+        private Integer score; // 0-100
+    }
 }
+

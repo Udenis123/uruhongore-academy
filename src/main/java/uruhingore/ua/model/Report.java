@@ -30,8 +30,9 @@ public class Report {
     @JoinColumn(name = "academic_data_id", nullable = false)
     private AcademicData academicData;
 
-    @Column(length = 50)
-    private String classe; // Student's class (e.g., "Maternelle 1", "Primaire 3")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private ClassLevel classLevel; // Student's class level
 
     private int score; // e.g., 80–100
     private String gradeColor; // optional (green, blue, yellow, red)
