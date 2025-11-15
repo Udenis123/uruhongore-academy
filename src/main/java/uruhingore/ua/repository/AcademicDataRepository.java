@@ -30,5 +30,11 @@ public interface AcademicDataRepository extends JpaRepository<AcademicData, UUID
 
     @Query("SELECT ad FROM AcademicData ad WHERE ad.published = true ORDER BY ad.academicYear DESC, ad.trimester, ad.period")
     List<AcademicData> findAllPublishedOrdered();
+
+    @Query("SELECT ad FROM AcademicData ad ORDER BY ad.createdAt DESC")
+    List<AcademicData> findAllOrderByCreatedAtDesc();
+
+    @Query("SELECT ad FROM AcademicData ad ORDER BY ad.createdAt ASC")
+    List<AcademicData> findAllOrderByCreatedAtAsc();
 }
 

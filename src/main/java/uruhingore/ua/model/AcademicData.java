@@ -22,14 +22,14 @@ public class AcademicData {
     private UUID id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private Trimester trimester;
 
     @Column(nullable = false, name = "academic_year")
     private Integer academicYear; // e.g., 2024, 2025
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private Period period;
 
     @Column(nullable = false)

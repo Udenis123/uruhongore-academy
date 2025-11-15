@@ -1,10 +1,12 @@
 package uruhingore.ua.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uruhingore.ua.dto.AcademicDataRequest;
 import uruhingore.ua.model.AcademicData;
 import uruhingore.ua.model.Period;
 import uruhingore.ua.model.Trimester;
@@ -35,6 +37,7 @@ public class AcademicDataController {
 
     /**
      * Get all academic data (including unpublished) - for admin/head
+     * Ordered by most recently created first
      */
     @GetMapping
     public ResponseEntity<List<AcademicData>> getAllAcademicData() {
@@ -64,9 +67,38 @@ public class AcademicDataController {
     }
 
     /**
-     * Create or get academic data
+     * Create new academic data
      */
     @PostMapping
+    public ResponseEntity<?> createAcademicData(@RequestBody @Valid AcademicDataRequest request) {
+        try {
+            log.info("Received request to create academic data: Trimester={}, Year={}, Period={}", 
+                    request.getTrimester(), request.getAcademicYear(), request.getPeriod());
+            AcademicData academicData = academicDataService.createAcademicData(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(academicData);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid request: {}", e.getMessage());
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("timestamp", java.time.LocalDateTime.now());
+            errorBody.put("status", HttpStatus.BAD_REQUEST.value());
+            errorBody.put("error", "Bad Request");
+            errorBody.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorBody);
+        } catch (Exception e) {
+            log.error("Error creating academic data: {}", e.getMessage(), e);
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("timestamp", java.time.LocalDateTime.now());
+            errorBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorBody.put("error", "Internal Server Error");
+            errorBody.put("message", "An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
+        }
+    }
+
+    /**
+     * Create or get academic data (backward compatibility)
+     */
+    @PostMapping("/get-or-create")
     public ResponseEntity<?> createOrGetAcademicData(
             @RequestParam Trimester trimester,
             @RequestParam Integer academicYear,
@@ -78,6 +110,67 @@ public class AcademicDataController {
             return ResponseEntity.status(HttpStatus.CREATED).body(academicData);
         } catch (Exception e) {
             log.error("Error creating/getting academic data: {}", e.getMessage(), e);
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("timestamp", java.time.LocalDateTime.now());
+            errorBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorBody.put("error", "Internal Server Error");
+            errorBody.put("message", "An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
+        }
+    }
+
+    /**
+     * Update academic data
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateAcademicData(
+            @PathVariable UUID id,
+            @RequestBody @Valid AcademicDataRequest request) {
+        try {
+            log.info("Received request to update academic data: {}", id);
+            AcademicData academicData = academicDataService.updateAcademicData(id, request);
+            return ResponseEntity.ok(academicData);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid request: {}", e.getMessage());
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("timestamp", java.time.LocalDateTime.now());
+            errorBody.put("status", HttpStatus.BAD_REQUEST.value());
+            errorBody.put("error", "Bad Request");
+            errorBody.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorBody);
+        } catch (Exception e) {
+            log.error("Error updating academic data: {}", e.getMessage(), e);
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("timestamp", java.time.LocalDateTime.now());
+            errorBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorBody.put("error", "Internal Server Error");
+            errorBody.put("message", "An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
+        }
+    }
+
+    /**
+     * Delete academic data
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteAcademicData(@PathVariable UUID id) {
+        try {
+            log.info("Received request to delete academic data: {}", id);
+            academicDataService.deleteAcademicData(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "AcademicData deleted successfully");
+            response.put("id", id);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid request: {}", e.getMessage());
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("timestamp", java.time.LocalDateTime.now());
+            errorBody.put("status", HttpStatus.NOT_FOUND.value());
+            errorBody.put("error", "Not Found");
+            errorBody.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody);
+        } catch (Exception e) {
+            log.error("Error deleting academic data: {}", e.getMessage(), e);
             Map<String, Object> errorBody = new HashMap<>();
             errorBody.put("timestamp", java.time.LocalDateTime.now());
             errorBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
