@@ -40,9 +40,13 @@ public class Student {
     @Column(nullable = false)
     private String gender; // MALE, FEMALE
 
+    @Column(length = 500)
+    private String profilePhoto; // Cloudinary URL
+
     // Academic information
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String classLevel; // e.g., "Nursery 1", "Nursery 2", "Nursery 3", "Pre-Primary"
+    private ClassLevel classLevel;
 
     @Column(nullable = false)
     private String academicYear; // e.g., "2024-2025"

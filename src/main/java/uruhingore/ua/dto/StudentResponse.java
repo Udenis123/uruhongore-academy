@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uruhingore.ua.model.ClassLevel;
 import uruhingore.ua.model.Student;
 
 import java.time.LocalDate;
@@ -25,9 +26,10 @@ public class StudentResponse {
     private String fullName;
     private LocalDate dateOfBirth;
     private String gender;
+    private String profilePhoto;
     
     // Academic information
-    private String classLevel;
+    private ClassLevel classLevel;
     private String academicYear;
     private Student.StudentStatus status;
     
@@ -71,6 +73,7 @@ public class StudentResponse {
                 .fullName(student.getFirstName() + " " + student.getLastName())
                 .dateOfBirth(student.getDateOfBirth())
                 .gender(student.getGender())
+                .profilePhoto(student.getProfilePhoto())
                 .classLevel(student.getClassLevel())
                 .academicYear(student.getAcademicYear())
                 .status(student.getStatus())

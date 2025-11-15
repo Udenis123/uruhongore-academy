@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uruhingore.ua.model.Period;
+import uruhingore.ua.model.Trimester;
 
 import java.util.UUID;
 
@@ -14,8 +16,9 @@ import java.util.UUID;
 public class AddMarkRequest {
     private UUID studentId;
     private UUID moduleId;
-    private Integer trimester; // 1, 2, or 3
+    private Trimester trimester; // FIRST, SECOND, THIRD
     private Integer academicYear; // e.g., 2024, 2025
+    private Period period; // PERIOD_1, PERIOD_2, PERIOD_3, FINAL_SEMESTER
     private String classe; // e.g., "Maternelle 1", "Primaire 2"
     private int score; // 0-100
     private String teacherComment; // Optional

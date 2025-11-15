@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
+import uruhingore.ua.model.ClassLevel;
 import uruhingore.ua.model.Student;
 
 import java.time.LocalDate;
@@ -31,8 +32,8 @@ public class StudentRequest {
     private String gender;
 
     // Academic information
-    @NotBlank(message = "Class level is required")
-    private String classLevel; // e.g., "Nursery 1", "Nursery 2", "Nursery 3"
+    @NotNull(message = "Class level is required")
+    private ClassLevel classLevel;
 
     @NotBlank(message = "Academic year is required")
     private String academicYear; // e.g., "2024-2025"

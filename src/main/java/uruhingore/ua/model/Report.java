@@ -26,11 +26,9 @@ public class Report {
     @JoinColumn(name = "module_id", nullable = false)
     private Module module;
 
-    @Column(nullable = false)
-    private Integer trimester; // 1, 2, or 3
-
-    @Column(nullable = false)
-    private Integer academicYear; // e.g., 2024, 2025
+    @ManyToOne
+    @JoinColumn(name = "academic_data_id", nullable = false)
+    private AcademicData academicData;
 
     @Column(length = 50)
     private String classe; // Student's class (e.g., "Maternelle 1", "Primaire 3")

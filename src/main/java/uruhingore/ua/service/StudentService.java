@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uruhingore.ua.dto.StudentRequest;
 import uruhingore.ua.dto.StudentResponse;
+import uruhingore.ua.model.ClassLevel;
 import uruhingore.ua.model.Module;
 import uruhingore.ua.model.Role;
 import uruhingore.ua.model.Student;
@@ -14,7 +15,10 @@ import uruhingore.ua.model.Users;
 import uruhingore.ua.repository.ModuleRepository;
 import uruhingore.ua.repository.StudentRepository;
 import uruhingore.ua.repository.UserRepository;
+import uruhingore.ua.service.CloudinaryService;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Year;
 import java.util.HashSet;
 import java.util.List;
@@ -30,9 +34,21 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
     private final ModuleRepository moduleRepository;
+    private final CloudinaryService cloudinaryService;
     
+    /**
+     * Create a new student (backward compatible - no profile photo)
+     */
     @Transactional
     public StudentResponse createStudent(@Valid StudentRequest request) {
+        return createStudent(request, null);
+    }
+
+    /**
+     * Create a new student with optional profile photo
+     */
+    @Transactional
+    public StudentResponse createStudent(@Valid StudentRequest request, MultipartFile profilePhoto) {
         log.info("Creating student: {} {}", request.getFirstName(), request.getLastName());
         
         // Validate parents exist and have PARENTS role
@@ -77,8 +93,22 @@ public class StudentService {
                 .build();
         
         Student savedStudent = studentRepository.save(student);
-        log.info("Student created successfully with code: {}", savedStudent.getStudentCode());
         
+        // Upload profile photo if provided
+        if (profilePhoto != null && !profilePhoto.isEmpty()) {
+            try {
+                log.info("Uploading profile photo for newly created student: {}", savedStudent.getId());
+                String photoUrl = cloudinaryService.uploadProfilePhoto(profilePhoto, savedStudent.getId());
+                savedStudent.setProfilePhoto(photoUrl);
+                savedStudent = studentRepository.save(savedStudent);
+                log.info("Profile photo uploaded successfully for student: {}", savedStudent.getId());
+            } catch (IOException e) {
+                log.error("Failed to upload profile photo for student: {}", savedStudent.getId(), e);
+                // Don't fail student creation if photo upload fails, just log the error
+            }
+        }
+        
+        log.info("Student created successfully with code: {}", savedStudent.getStudentCode());
         return StudentResponse.fromStudent(savedStudent);
     }
     
@@ -175,7 +205,7 @@ public class StudentService {
     }
     
     @Transactional(readOnly = true)
-    public List<StudentResponse> getStudentsByClassLevel(String classLevel) {
+    public List<StudentResponse> getStudentsByClassLevel(ClassLevel classLevel) {
         log.info("Fetching students for class level: {}", classLevel);
         List<Student> students = studentRepository.findByClassLevel(classLevel);
         return students.stream()
@@ -195,5 +225,56 @@ public class StudentService {
         }
         
         return code;
+    }
+
+    /**
+     * Upload profile photo for a student
+     */
+    @Transactional
+    public StudentResponse uploadProfilePhoto(UUID studentId, MultipartFile file) throws IOException {
+        log.info("Uploading profile photo for student: {}", studentId);
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
+
+        // Delete old photo if exists
+        if (student.getProfilePhoto() != null && !student.getProfilePhoto().isEmpty()) {
+            try {
+                cloudinaryService.deleteProfilePhoto(student.getProfilePhoto());
+            } catch (IOException e) {
+                log.warn("Failed to delete old profile photo: {}", e.getMessage());
+            }
+        }
+
+        // Upload new photo
+        String photoUrl = cloudinaryService.uploadProfilePhoto(file, studentId);
+        student.setProfilePhoto(photoUrl);
+        
+        Student updatedStudent = studentRepository.save(student);
+        log.info("Profile photo uploaded successfully for student: {}", studentId);
+        
+        return StudentResponse.fromStudent(updatedStudent);
+    }
+
+    /**
+     * Delete profile photo for a student
+     */
+    @Transactional
+    public StudentResponse deleteProfilePhoto(UUID studentId) throws IOException {
+        log.info("Deleting profile photo for student: {}", studentId);
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
+
+        if (student.getProfilePhoto() != null && !student.getProfilePhoto().isEmpty()) {
+            cloudinaryService.deleteProfilePhoto(student.getProfilePhoto());
+            student.setProfilePhoto(null);
+            Student updatedStudent = studentRepository.save(student);
+            log.info("Profile photo deleted successfully for student: {}", studentId);
+            return StudentResponse.fromStudent(updatedStudent);
+        }
+
+        log.info("No profile photo to delete for student: {}", studentId);
+        return StudentResponse.fromStudent(student);
     }
 }

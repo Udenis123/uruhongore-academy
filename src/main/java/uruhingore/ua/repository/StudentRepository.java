@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import uruhingore.ua.model.ClassLevel;
 import uruhingore.ua.model.Student;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     
     Optional<Student> findByStudentCode(String studentCode);
     
-    List<Student> findByClassLevel(String classLevel);
+    List<Student> findByClassLevel(ClassLevel classLevel);
     
     List<Student> findByAcademicYear(String academicYear);
     
@@ -26,7 +27,7 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     
     @Query("SELECT s FROM Student s WHERE s.classLevel = :classLevel AND s.academicYear = :academicYear")
     List<Student> findByClassLevelAndAcademicYear(
-            @Param("classLevel") String classLevel, 
+            @Param("classLevel") ClassLevel classLevel, 
             @Param("academicYear") String academicYear
     );
     

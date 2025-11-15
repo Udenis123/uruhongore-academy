@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import uruhingore.ua.dto.BulletinRequest;
 import uruhingore.ua.dto.ModuleGradeDto;
 import uruhingore.ua.dto.SubjectGrade;
+import uruhingore.ua.model.Trimester;
 import uruhingore.ua.repository.ModuleRepository;
 import uruhingore.ua.repository.ReportRepository;
 import uruhingore.ua.repository.StudentRepository;
@@ -46,11 +47,11 @@ public class DocumentService {
     /**
      * Generate bulletin PDF from database (student reports with modules)
      */
-    public byte[] generateBulletinFromDatabase(java.util.UUID studentId, Integer trimester, 
+    public byte[] generateBulletinFromDatabase(java.util.UUID studentId, Trimester trimester, 
             Integer academicYear) throws DocumentException, IOException {
         
-        // Fetch reports from database
-        List<uruhingore.ua.model.Report> reports = reportRepository.findReportsForBulletin(
+        // Fetch reports from database (only published)
+        List<uruhingore.ua.model.Report> reports = reportRepository.findPublishedReportsForBulletin(
                 studentId, trimester, academicYear);
         
         if (reports.isEmpty()) {
@@ -80,11 +81,11 @@ public class DocumentService {
             throw new IllegalArgumentException("No active modules found. Please add modules first.");
         }
         
-        // Trimesters are 1, 2, 3
-        List<Integer> trimesters = java.util.Arrays.asList(1, 2, 3);
+        // Trimesters are FIRST, SECOND, THIRD
+        List<Trimester> trimesters = java.util.Arrays.asList(Trimester.FIRST, Trimester.SECOND, Trimester.THIRD);
         
-        // Fetch all reports for this student and academic year
-        List<uruhingore.ua.model.Report> allReports = reportRepository.findByStudentIdAndAcademicYear(
+        // Fetch all published reports for this student and academic year
+        List<uruhingore.ua.model.Report> allReports = reportRepository.findPublishedByStudentIdAndAcademicYear(
                 studentId, academicYear);
         
         // Generate PDF
@@ -108,7 +109,7 @@ public class DocumentService {
     private void buildGridBulletinDocument(Document document, uruhingore.ua.model.Student student,
             Integer academicYear, String classe,
             List<uruhingore.ua.model.Module> modules,
-            List<Integer> trimesters,
+            List<Trimester> trimesters,
             List<uruhingore.ua.model.Report> reports) throws DocumentException {
         
         addHeader(document);
@@ -136,7 +137,7 @@ public class DocumentService {
      * Add ATELIERS grid with color-coded cells for each trimester
      */
     private void addAteliersGrid(Document document, List<uruhingore.ua.model.Module> modules,
-            List<Integer> trimesters,
+            List<Trimester> trimesters,
             List<uruhingore.ua.model.Report> reports) throws DocumentException {
         
         // Number of columns = 1 (ATELIERS label) + number of trimesters
@@ -162,8 +163,8 @@ public class DocumentService {
         table.addCell(ateliersHeader);
         
         // Trimester headers
-        for (Integer trimester : trimesters) {
-            String trimesterName = "TRIMESTRE " + getRomanNumeral(trimester);
+        for (Trimester trimester : trimesters) {
+            String trimesterName = "TRIMESTRE " + getRomanNumeral(trimester.getValue());
             PdfPCell trimesterHeader = new PdfPCell(new Phrase(trimesterName, FONT_BOLD_9));
             trimesterHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
             trimesterHeader.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -173,10 +174,12 @@ public class DocumentService {
         }
         
         // Create a map for quick report lookup: moduleId -> trimester -> report
-        Map<java.util.UUID, Map<Integer, uruhingore.ua.model.Report>> reportMap = new java.util.HashMap<>();
+        Map<java.util.UUID, Map<Trimester, uruhingore.ua.model.Report>> reportMap = new java.util.HashMap<>();
         for (uruhingore.ua.model.Report report : reports) {
-            reportMap.computeIfAbsent(report.getModule().getId(), k -> new java.util.HashMap<>())
-                    .put(report.getTrimester(), report);
+            if (report.getAcademicData() != null) {
+                reportMap.computeIfAbsent(report.getModule().getId(), k -> new java.util.HashMap<>())
+                        .put(report.getAcademicData().getTrimester(), report);
+            }
         }
         
         // Module rows (ATELIERS)
@@ -190,7 +193,7 @@ public class DocumentService {
             table.addCell(atelierCell);
             
             // Trimester cells (colored based on score)
-            for (Integer trimester : trimesters) {
+            for (Trimester trimester : trimesters) {
                 PdfPCell scoreCell = new PdfPCell();
                 scoreCell.setFixedHeight(25f);
                 scoreCell.setPadding(5f);
@@ -258,7 +261,7 @@ public class DocumentService {
     /**
      * Generate blank bulletin template with all modules (for teachers to fill in marks)
      */
-    public byte[] generateBulletinTemplate(java.util.UUID studentId, Integer trimester, 
+    public byte[] generateBulletinTemplate(java.util.UUID studentId, Trimester trimester, 
             Integer academicYear, String classe) throws DocumentException, IOException {
         
         // Fetch student information
@@ -285,7 +288,7 @@ public class DocumentService {
         
         // Build bulletin request
         String studentFullName = student.getFirstName() + " " + student.getLastName();
-        String trimesterName = "TRIMESTRE " + getRomanNumeral(trimester);
+        String trimesterName = "TRIMESTRE " + getRomanNumeral(trimester.getValue());
         BulletinRequest request = BulletinRequest.builder()
                 .studentId(studentId)
                 .studentName(studentFullName)
@@ -309,8 +312,13 @@ public class DocumentService {
         
         uruhingore.ua.model.Report firstReport = reports.get(0);
         uruhingore.ua.model.Student student = firstReport.getStudent();
-        Integer trimester = firstReport.getTrimester();
-        Integer academicYear = firstReport.getAcademicYear();
+        
+        if (firstReport.getAcademicData() == null) {
+            throw new IllegalArgumentException("Report must have AcademicData");
+        }
+        
+        Trimester trimester = firstReport.getAcademicData().getTrimester();
+        Integer academicYear = firstReport.getAcademicData().getAcademicYear();
         
         // Create ModuleGradeDto list from reports
         List<ModuleGradeDto> moduleGrades = new ArrayList<>();
@@ -332,7 +340,7 @@ public class DocumentService {
         String comment = firstReport.getTeacherComment();
         String classe = firstReport.getClasse() != null ? firstReport.getClasse() : "N/A";
         String studentFullName = student.getFirstName() + " " + student.getLastName();
-        String trimesterName = "TRIMESTRE " + getRomanNumeral(trimester);
+        String trimesterName = "TRIMESTRE " + getRomanNumeral(trimester.getValue());
         
         return BulletinRequest.builder()
                 .studentId(student.getId())
